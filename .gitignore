@@ -1,0 +1,35 @@
+# Dependency directories
+node_modules/
+build/
+dist/
+coverage/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Data and generated outputs
+data/exports/
+data/runtime/
+
+# AI Studio metadata (local only)
+assets/.aistudio/

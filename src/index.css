@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+/* ── Typography ───────────────────────────────────────────── */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Brand palette */
+  --signal-50:  #f0f4ff;
+  --signal-100: #e0eaff;
+  --signal-400: #6b8cff;
+  --signal-500: #4f72ff;
+  --signal-600: #3a5bdb;
+  --signal-900: #1a2560;
+
+  --surface-0:  #0f1117;
+  --surface-1:  #171b27;
+  --surface-2:  #1e2338;
+  --surface-3:  #252b42;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* ── Animated Background Orb ─────────────────────────────── */
+@keyframes orb-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(40px, -30px) scale(1.08); }
+  66%  { transform: translate(-20px, 25px) scale(0.96); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes orb-drift-2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(-50px, 30px) scale(1.06); }
+  80%  { transform: translate(30px, -20px) scale(0.97); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.hero-orb-1 {
+  animation: orb-drift 18s ease-in-out infinite;
+}
+.hero-orb-2 {
+  animation: orb-drift-2 22s ease-in-out infinite;
+}
+
+/* ── Signal pulse indicator ──────────────────────────────── */
+@keyframes signal-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}
+
+.signal-dot {
+  animation: signal-pulse 2s ease-in-out infinite;
+}
+
+/* ── Step connector flowing line ─────────────────────────── */
+@keyframes flow-line {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.flow-connector {
+  background: linear-gradient(90deg, #3a5bdb 0%, #6b8cff 40%, #3a5bdb 80%);
+  background-size: 200% 100%;
+  animation: flow-line 3s linear infinite;
+}
+
+/* ── Card hover glow ─────────────────────────────────────── */
+.card-glow {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.card-glow:hover {
+  box-shadow: 0 0 0 1px rgba(107, 140, 255, 0.3), 0 8px 32px rgba(107, 140, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+/* ── Upload card drop zone ───────────────────────────────── */
+@keyframes dash-border {
+  to { stroke-dashoffset: -20; }
+}
+
+.drop-zone-active {
+  border-color: var(--signal-500) !important;
+  background: rgba(79, 114, 255, 0.05) !important;
+}
+
+/* ── Progress step active shimmer ────────────────────────── */
+@keyframes active-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.step-active-shimmer {
+  background: linear-gradient(90deg, #1e2338 0%, #2a3258 40%, #1e2338 80%);
+  background-size: 200% 100%;
+  animation: active-shimmer 2.5s linear infinite;
+}
+
+/* ── Toast slide-up ──────────────────────────────────────── */
+@keyframes toast-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.toast-enter {
+  animation: toast-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Mode selector cards ─────────────────────────────────── */
+.mode-card-selected {
+  border-color: var(--signal-500) !important;
+  background: rgba(79, 114, 255, 0.08) !important;
+}
+
+/* ── Approval badge ──────────────────────────────────────── */
+@keyframes approve-check {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.approve-badge-enter {
+  animation: approve-check 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Utility ─────────────────────────────────────────────── */
+.text-gradient-signal {
+  background: linear-gradient(135deg, #6b8cff 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-grid-subtle {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+}

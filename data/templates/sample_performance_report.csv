@@ -1,0 +1,7 @@
+post_id,platform,topic,content_pillar,posted_date,views,likes,comments,shares,saves,engagement_rate_pct,reach,watch_time_pct,click_through_rate_pct,top_performing_hook,notes
+P001,YouTube,How I automated my content workflow,AI Automation,2025-04-10,48200,1820,142,98,310,4.9,38100,52,3.2,"Here is what most people get wrong about automation",Strong performer — hook retained 80% of viewers past 3s
+P002,Instagram,My 30-post batching workflow,Content Ops,2025-04-12,29800,2410,380,1100,1840,12.9,27600,,,"This saved me 10 hours every week",Saves ratio very high — repurpose to YouTube Short
+P003,LinkedIn,The metric that predicts content performance,Marketing Systems,2025-04-15,8420,620,94,48,180,11.2,7100,,,,"Most marketers track the wrong number",Comments above average — consider expanding to carousel
+P004,TikTok,Why creators plateau at 10k,Creator Growth,2025-04-18,142000,8900,740,3200,4100,9.1,128000,61,,"Here is what nobody tells you at 10k",Video went semi-viral — repost with updated hook on Instagram
+P005,YouTube,Building a content calendar with AI,AI Automation,2025-04-22,21400,980,88,62,210,5.3,18700,48,2.1,"I built this in two days with no paid tools",Below-average retention — hook needs improvement
+P006,Instagram,Top 5 AI tools that actually save time,AI Productivity,2025-04-25,61200,4920,512,2800,5400,14.9,55800,,,,"5 AI tools I actually use every day",Best-performing reel this month — repurpose immediately

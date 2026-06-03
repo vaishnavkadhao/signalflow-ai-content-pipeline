@@ -1,0 +1,6 @@
+{
+  "name": "AI Multi-Agent Content Pipeline",
+  "description": "A modular multi-agent pipeline for content automation, trend validation, pattern analysis, script generation, and content calendar planning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,21 @@
+{
+  "creator_name": "Modern Architect",
+  "timezone": "Asia/Kolkata",
+  "content_pillars": [
+    "AI Automation",
+    "Marketing Systems",
+    "Build in Public",
+    "Case Studies",
+    "Tool Tutorials"
+  ],
+  "banned_phrases": [
+    "jaw-dropping",
+    "revolutionary",
+    "unprecedented",
+    "game-changer"
+  ],
+  "formatting": {
+    "scripts": "staccato",
+    "duration_target_seconds": 50
+  }
+}
