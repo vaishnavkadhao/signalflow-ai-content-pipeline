@@ -8,6 +8,10 @@ A portfolio-ready AI content operations dashboard with a local multi-agent Pytho
 
 ## Demo
 
+**Live app:** https://signalflow-ai-content-pipelines.onrender.com/
+
+> Hosted on Render. Free-tier services may take a few seconds to wake up after inactivity.
+
 ![SignalFlow AI demo](assets/screenshots/signalflow-demo.gif)
 
 ### Demo Flow
