@@ -144,6 +144,7 @@ export default function App() {
   const [mode, setMode] = useState<Mode>("free");
   const [geminiKey, setGeminiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   // Pipeline
   const [isPipelineRunning, setIsPipelineRunning] = useState(false);
@@ -301,6 +302,16 @@ export default function App() {
 
   // ── Pipeline Run ──────────────────────────────────────────────────────────
   async function handleRunPipeline() {
+    // Validate: AI modes require a key before we even contact the server
+    if (mode !== "free" && !geminiKey.trim()) {
+      notify(
+        "AI Assist / Pro mode requires a Gemini API key. Enter it in the Start tab or switch to Free Mode.",
+        "error"
+      );
+      setActiveTab("start");
+      return;
+    }
+
     const approved = trendsWithApproval.filter(t => t._approvalState === "approved");
     const useApproved = approved.length > 0;
 
@@ -312,18 +323,23 @@ export default function App() {
       setActiveStep(prev => prev < 7 ? prev + 1 : 7);
     }, 1600);
 
+    // Map UI mode to pipeline generation_mode string
+    const generationMode = mode === "free" ? "free" : mode === "ai_assist" ? "assist" : "pro";
+
     try {
       const body: any = {
+        generation_mode: generationMode,
+        use_llm: mode !== "free",          // legacy compat flag
         dry_run: mode === "free",
-        use_llm: mode !== "free",
         max_trends: maxApprove,
       };
 
       if (useApproved) {
-        // Pass approved trends as plain objects (strip _approvalState)
         body.approved_trends = approved.map(({ _approvalState, _engagementScore, ...t }) => t);
       }
 
+      // Key is only included when an AI mode is selected and the key is provided.
+      // It is never stored in localStorage or written anywhere.
       if (mode !== "free" && geminiKey.trim()) {
         body.gemini_api_key = geminiKey.trim();
       }
@@ -420,6 +436,185 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
+      {showGuide && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm px-4 py-6 overflow-y-auto">
+          <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[#111622] shadow-2xl shadow-black/40">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/8 bg-[#111622]/95 px-6 py-5 backdrop-blur">
+              <div>
+                <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-blue-300">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  Beginner guide
+                </div>
+                <h2 className="text-xl font-bold text-white">How to use SignalFlow AI</h2>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-400">
+                  Start with trend data, add brand context if you have it, approve the best ideas, then generate a review-ready calendar.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowGuide(false)}
+                className="rounded-xl border border-white/10 p-2 text-slate-500 transition hover:border-white/20 hover:text-white"
+                aria-label="Close guide"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-6 p-6">
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+                    <ListChecks className="h-4 w-4 text-emerald-400" />
+                    First run
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      ["1", "Upload trend CSV", "Use Sources to add topics, platforms, and engagement numbers."],
+                      ["2", "Add strategy context", "Use Strategy for tone, content pillars, banned phrases, and audience notes."],
+                      ["3", "Approve trends", "Pick the 5-20 ideas you actually want the pipeline to use."],
+                      ["4", "Run pipeline", "Use Free Mode for templates or AI Assist/Pro with your Gemini key."],
+                      ["5", "Review outputs", "Open Calendar and Report before using anything publicly."],
+                    ].map(([num, title, body]) => (
+                      <div key={num} className="flex gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-[10px] font-bold text-blue-300">
+                          {num}
+                        </span>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-200">{title}</p>
+                          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{body}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+                    <Table className="h-4 w-4 text-blue-400" />
+                    Trend CSV format
+                  </div>
+                  <p className="mb-3 text-[11px] leading-relaxed text-slate-500">
+                    Required data answers one question: which topics are getting attention?
+                  </p>
+                  <div className="rounded-xl border border-white/8 bg-[#0c101a] p-3 font-mono text-[10px] leading-relaxed text-slate-400">
+                    topic, platform, source_url, views, likes, comments, shares, saves, posted_date, creator, content_format, content_pillar, region, keyword
+                  </div>
+                  <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Example row</p>
+                    <p className="font-mono text-[10px] leading-relaxed text-slate-400">
+                      AI tools for creators, YouTube, https://..., 120000, 5200, 310, 180, 900, 2026-06-01, CreatorName, Short, AI Automation, India, ai tools
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+                    <Zap className="h-4 w-4 text-violet-400" />
+                    Generation modes
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      ["Free Mode", "No key. Fast template output. Good for testing the flow."],
+                      ["AI Assist", "Uses Gemini. About 1 AI call per approved trend."],
+                      ["Pro Quality", "Uses Gemini draft plus critique. About 2 AI calls per approved trend."],
+                    ].map(([title, body]) => (
+                      <div key={title} className="rounded-xl border border-white/6 bg-white/[0.02] p-3">
+                        <p className="text-xs font-semibold text-slate-200">{title}</p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{body}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 flex gap-2 text-[11px] leading-relaxed text-slate-500">
+                    <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                    API keys are used only for the current run. They are not saved to disk, localStorage, reports, or logs.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+                    <TrendingUp className="h-4 w-4 text-emerald-400" />
+                    Where to get data
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      "YouTube Studio analytics",
+                      "Instagram, TikTok, LinkedIn analytics",
+                      "Google Trends",
+                      "GA4 performance exports",
+                      "Competitor content research",
+                      "Internal content calendar",
+                      "Manual research spreadsheet",
+                      "Past post performance reports",
+                    ].map(item => (
+                      <div key={item} className="rounded-lg border border-white/6 bg-white/[0.02] px-3 py-2 text-[11px] text-slate-400">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+                    <FileText className="h-4 w-4 text-amber-400" />
+                    Optional strategy files
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      "Brand strategy PDF or text",
+                      "Content strategy document",
+                      "Target audience document",
+                      "Competitor list",
+                      "Product or service details",
+                      "Tone of voice guide",
+                      "Monthly campaign plan",
+                      "Existing content calendar CSV",
+                    ].map(item => (
+                      <div key={item} className="rounded-lg border border-white/6 bg-white/[0.02] px-3 py-2 text-[11px] text-slate-400">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5">
+                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+                  <CalendarIcon className="h-4 w-4 text-blue-400" />
+                  Outputs you review
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    ["Content Calendar", "Scheduled post ideas with dates, formats, topics, hooks, CTAs, and review status."],
+                    ["CSV Export", "Spreadsheet-friendly calendar file for sharing or editing."],
+                    ["JSON Export", "Structured output for future automation or app integrations."],
+                    ["Run Report", "Execution summary with mode, fallback status, logs, and safety notes."],
+                  ].map(([title, body]) => (
+                    <div key={title} className="rounded-xl border border-white/6 bg-[#0c101a] p-4">
+                      <p className="text-xs font-semibold text-slate-200">{title}</p>
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">{body}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-[11px] leading-relaxed text-amber-200 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                  <p>No auto-posting happens here. Treat outputs as review-ready drafts and approve them manually before publishing.</p>
+                </div>
+                <button
+                  onClick={() => { setShowGuide(false); setActiveTab("sources"); }}
+                  className="shrink-0 rounded-xl bg-amber-400 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-amber-300"
+                >
+                  Go to Sources
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0f1117]/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           {/* Logo */}
@@ -597,6 +792,29 @@ export default function App() {
                     Upload trends first <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-300">
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">New here?</h3>
+                    <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
+                      Open the guide for the data format, upload steps, generation modes, and the outputs you should review.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowGuide(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-xs font-semibold text-blue-200 transition hover:border-blue-400/50 hover:bg-blue-500/15"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  Open Guide
+                </button>
               </div>
             </div>
 
