@@ -80,6 +80,10 @@ async function startServer() {
   app.use(express.json({ limit: "5mb" }));
   app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
+  app.get("/api/health", (req, res) => {
+    res.json({ ok: true, service: "signalflow-ai" });
+  });
+
   // ── API 1: Get trends ────────────────────────────────────────────────────
   app.get("/api/trends", (req, res) => {
     const csvPath = path.join(PROJECT_ROOT, "data", "sample_trends.csv");
@@ -185,41 +189,77 @@ async function startServer() {
   // ── API 8: Run the Python pipeline ───────────────────────────────────────
   /**
    * Body params:
-   *   dry_run        boolean  — whether to skip LLM calls (default true)
-   *   use_llm        boolean  — enable LLM generation (default false)
-   *   approved_trends array  — if provided, pipeline runs on these trends only
-   *   max_trends     number  — limit top N trends if no approval list given
-   *   gemini_api_key string  — BYOK key, passed via env, never logged or stored
-   *   mode           string  — "free" | "ai_assist" | "pro" (informational for now)
+   *   generation_mode string  — "free" | "assist" | "pro" (default "free")
+   *   use_llm         boolean — legacy flag; sets mode to "assist" if true (default false)
+   *   dry_run         boolean — skip paid API calls (default true in free mode)
+   *   approved_trends array   — if provided, pipeline runs on these trends only
+   *   max_trends      number  — limit top N trends if no approval list given
+   *   gemini_api_key  string  — BYOK key, passed only via child process env, never logged
    */
   app.post("/api/pipeline/run", (req, res) => {
     const {
+      generation_mode = "free",
       use_llm = false,
-      dry_run = true,
+      dry_run,
       approved_trends,
       max_trends,
       gemini_api_key,
     } = req.body;
 
+    // Resolve effective mode (legacy use_llm maps to "assist") and validate it
+    // server-side before it is used in the shell command.
+    const requestedMode: string =
+      generation_mode && generation_mode !== "free"
+        ? String(generation_mode)
+        : use_llm
+        ? "assist"
+        : "free";
+    const allowedModes = new Set(["free", "assist", "pro"]);
+    if (!allowedModes.has(requestedMode)) {
+      res.status(400).json({ error: "Invalid generation mode." });
+      return;
+    }
+    const effectiveMode = requestedMode;
+
+    // dry_run defaults to true only in free mode
+    const effectiveDryRun: boolean =
+      dry_run !== undefined ? Boolean(dry_run) : effectiveMode === "free";
+
     // Determine input CSV
     let inputCsv = path.join("data", "sample_trends.csv");
 
     if (Array.isArray(approved_trends) && approved_trends.length > 0) {
-      // Write to temporary runtime file — do NOT overwrite sample_trends.csv
       const runtimePath = writeApprovedTrendsCsv(approved_trends);
-      // Use relative path for the Python command
       inputCsv = path.relative(PROJECT_ROOT, runtimePath);
     }
 
     const python = getPythonExecutable();
-    const dryRunFlag = dry_run ? "--dry-run" : "";
-    const useLlmFlag = use_llm ? "--use-llm" : "";
-    const maxTrendsFlag = max_trends ? `--max-trends ${Number(max_trends)}` : "";
+    const dryRunFlag = effectiveDryRun ? "--dry-run" : "";
+    const maxTrendsValue = Number(max_trends);
+    const maxTrendsFlag =
+      Number.isFinite(maxTrendsValue) && maxTrendsValue > 0
+        ? `--max-trends ${Math.floor(maxTrendsValue)}`
+        : "";
+    // generation_mode is passed as a named flag; key is NEVER in the command string
+    const modeFlag = `--generation-mode ${effectiveMode}`;
 
-    const command = `${python} -m workflows.run_pipeline --input "${inputCsv}" ${dryRunFlag} ${useLlmFlag} ${maxTrendsFlag}`.trim();
+    const command = [
+      python,
+      "-m workflows.run_pipeline",
+      `--input "${inputCsv}"`,
+      dryRunFlag,
+      modeFlag,
+      maxTrendsFlag,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    // Log the command (safe — no key in it)
     console.log(`[SignalFlow AI] Running: ${command}`);
 
-    // Build a safe env — pass Gemini key if provided, but never log it
+    // Build a clean subprocess env.
+    // Key is passed through env only — never as a CLI arg, never logged.
     const runEnv: NodeJS.ProcessEnv = { ...process.env, PYTHONPATH: "." };
     if (typeof gemini_api_key === "string" && gemini_api_key.trim()) {
       runEnv.GEMINI_API_KEY = gemini_api_key.trim();
@@ -227,8 +267,12 @@ async function startServer() {
 
     exec(command, { env: runEnv, cwd: PROJECT_ROOT }, (error, stdout, stderr) => {
       const success = !error;
-      const calendarJsonPath = path.join(PROJECT_ROOT, "data", "exports", "content_calendar.json");
-      const reportMdPath = path.join(PROJECT_ROOT, "data", "exports", "run_report.md");
+      const calendarJsonPath = path.join(
+        PROJECT_ROOT, "data", "exports", "content_calendar.json"
+      );
+      const reportMdPath = path.join(
+        PROJECT_ROOT, "data", "exports", "run_report.md"
+      );
 
       let calendarData: any[] = [];
       let reportMdContent = "";
@@ -244,10 +288,18 @@ async function startServer() {
         console.error("[SignalFlow AI] Error reading pipeline outputs:", ex);
       }
 
+      // Redact the API key from stdout/stderr before sending to the browser.
+      // The key should never appear in Python output, but this is a safety net.
+      const redact = (text: string): string => {
+        const key = typeof gemini_api_key === "string" ? gemini_api_key.trim() : "";
+        if (!key) return text;
+        return text.split(key).join("[REDACTED]");
+      };
+
       res.json({
         success,
-        stdout,
-        stderr,
+        stdout: redact(stdout || ""),
+        stderr: redact(stderr || ""),
         error: error ? error.message : null,
         calendar: calendarData,
         report: reportMdContent,
