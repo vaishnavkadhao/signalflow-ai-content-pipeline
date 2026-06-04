@@ -112,10 +112,12 @@ The pipeline accepts both legacy and new column formats:
 | Mode | What it does | API Key Required |
 |---|---|---|
 | **Free Mode** | Deterministic template generation, no LLM | No |
-| **AI Assist** | BYOK Gemini API for LLM-generated content | Yes (your key) |
-| **Pro Quality** | Write + critique + revise loop | Yes (your key) |
+| **AI Assist** | BYOK Gemini API for LLM-generated scripts, hooks, CTAs, captions, and visual notes | Yes (your key) |
+| **Pro Quality** | Write + critique + revise loop for stronger creative output | Yes (your key) |
 
-> API keys are passed only at run-time. Never saved to disk or logs.
+> API keys are passed only at run-time. They are never saved to disk, localStorage, reports, or logs.
+
+AI generation is optional. If Gemini is unavailable because of quota, model access, network, or key issues, SignalFlow AI falls back to template output and records the safe error category in the run report.
 
 ---
 
@@ -159,6 +161,40 @@ npm run dev
 ```
 
 Open: **http://localhost:3000**
+
+### Production build
+
+```bash
+npm run build
+npm start
+```
+
+Open: **http://localhost:3000**
+
+### Docker deployment build
+
+SignalFlow AI includes a Dockerfile for platforms that need both Node.js and Python in one service.
+
+```bash
+docker build -t signalflow-ai .
+docker run --rm -p 3000:3000 signalflow-ai
+```
+
+Health check:
+
+```text
+GET /api/health
+```
+
+For hosted deployment, use a Docker-based web service and set:
+
+```text
+NODE_ENV=production
+PORT=3000
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+Do not add a real `GEMINI_API_KEY` to the public repo. The app supports user-provided API keys at run-time.
 
 ### Run the Python pipeline only (CLI)
 
@@ -222,10 +258,11 @@ data/runtime/
 - **No platform scraping.** Phase 1 uses CSV input only.
 - **Free Mode works fully offline** without any paid API.
 - **Pydantic validates all agent I/O** before passing between steps.
+- **Public deployments are portfolio demos.** This version has no login or database, so uploaded settings are shared within the running service.
 
 ---
 
-## Phase 1 (Completed)
+## Completed
 
 - [x] CSV trend input with multi-format column support
 - [x] 7-agent Python pipeline (validate -> analyze -> prompt -> script -> hooks -> calendar)
@@ -239,14 +276,19 @@ data/runtime/
 - [x] `--max-trends` CLI flag to cap validated topics
 - [x] Sample templates for all 4 input types
 - [x] Tests for old and new CSV formats
+- [x] Optional Gemini-powered AI Assist generation
+- [x] Pro Quality generation mode plumbing with fallback safety
+- [x] Safe Gemini error categories in reports
+- [x] Beginner guide for data format, workflow, modes, and outputs
+- [x] Dockerfile and health endpoint for hosted deployment
 
 ---
 
 ## Phase 2 Roadmap
 
-- [ ] Gemini LLM integration for AI Assist mode
 - [ ] Strategy file parsing -- use brand tone to guide script generation
 - [ ] Analytics feedback loop -- use past performance to weight topic selection
+- [ ] User accounts, private workspaces, and persistent database storage
 - [ ] Google Sheets export
 - [ ] Notion / Airtable review board integration
 - [ ] PDF parsing for strategy documents

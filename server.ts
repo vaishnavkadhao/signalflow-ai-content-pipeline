@@ -80,6 +80,10 @@ async function startServer() {
   app.use(express.json({ limit: "5mb" }));
   app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
+  app.get("/api/health", (req, res) => {
+    res.json({ ok: true, service: "signalflow-ai" });
+  });
+
   // ── API 1: Get trends ────────────────────────────────────────────────────
   app.get("/api/trends", (req, res) => {
     const csvPath = path.join(PROJECT_ROOT, "data", "sample_trends.csv");
