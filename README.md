@@ -20,6 +20,19 @@ A portfolio-ready AI content operations dashboard with a local multi-agent Pytho
 
 ---
 
+## Recruiter Case Study Snapshot
+
+| Area | Summary |
+|---|---|
+| Problem | Marketing teams often collect trend ideas, score them, write content, and build calendars manually across disconnected tools. |
+| Solution | SignalFlow AI combines CSV trend intake, brand strategy settings, human approval, optional Gemini generation, and calendar export in one workflow. |
+| My Role | Product planning, AI workflow design, React dashboard, Express API, Python multi-agent pipeline, Docker setup, Render live deployment, GitHub portfolio packaging. |
+| Live Deployment | Docker-based production deployment on Render with a health endpoint and public portfolio links. |
+| Tech Stack | React, TypeScript, Express, Python, Pydantic, Gemini BYOK, Docker, Render, pytest. |
+| Safety Design | No auto-posting, no scraping, no stored API keys, Free Mode fallback, human review before publishing. |
+
+---
+
 ## Screenshots
 
 | Start Dashboard | Sources Upload |
@@ -262,7 +275,7 @@ data/runtime/
 - **No platform scraping.** Phase 1 uses CSV input only.
 - **Free Mode works fully offline** without any paid API.
 - **Pydantic validates all agent I/O** before passing between steps.
-- **Public deployments are portfolio demos.** This version has no login or database, so uploaded settings are shared within the running service.
+- **Public portfolio deployment uses shared runtime state.** This version has no login or database yet, so uploaded settings are shared within the running service.
 
 ---
 
@@ -323,4 +336,4 @@ ai-multi-agent-content-pipeline/
 
 ---
 
-*SignalFlow AI -- Phase 1 MVP. Not affiliated with any platform. No scraping. No auto-posting.*
+*SignalFlow AI -- AI-assisted content operations pipeline. Public deployment, no scraping, no auto-posting.*
